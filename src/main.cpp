@@ -1,147 +1,126 @@
 // This code was developed from the example code obtained via the Arduino IDE for the
-// Grove Time-of-Flight Distance Sensor VL53L0X.
+// Grove Time-of-Flight Distance Sensor VL53L4CX.
 // Modified by Calico for OMSI "How Fast"
-// January 20, 2025
+// February 11, 2025
  
-#include <Wire.h>
-#include <Adafruit_VL53L0X.h>  
-
-#define TOTAL_TOFS 2
-
-#define X_SHUT_PIN1 7
-#define X_SHUT_PIN2 8
-
-#define TOFS1_ADDR 0x30
-#define TOFS2_ADDR 0x31
-
-Adafruit_VL53L0X TOFS1;
-Adafruit_VL53L0X TOFS2;
-
-// Create array-variable for the sensors' range (in mm):
-uint16_t ranges_mm[TOTAL_TOFS];
-
-//====================================================================
-// Define global variables for the sensors:
-//====================================================================
-typedef struct {
-  Adafruit_VL53L0X *psensor; // pointer to object
-  TwoWire *pwire;
-  int addr;            // IIC addr number for the sensor 
-  int shutdown_pin;  // which pin for shutdown;
-  Adafruit_VL53L0X::VL53L0X_Sense_config_t sensor_config;     // options for how to use the sensor
-  uint16_t range;        // range value used in continuous mode stuff.
-  uint8_t sensor_status; // status from last ranging in continuous.
-} sensorList_t;
-
-sensorList_t sensors[] = {
-  {&TOFS1, &Wire, TOFS1_ADDR, X_SHUT_PIN1, Adafruit_VL53L0X::VL53L0X_SENSE_DEFAULT, 0, 0},
-  {&TOFS2, &Wire, TOFS2_ADDR, X_SHUT_PIN2, Adafruit_VL53L0X::VL53L0X_SENSE_DEFAULT, 0, 0}
-};
-
+/**
+ ******************************************************************************
+ * @file    VL53L4CX_Sat_HelloWorld.ino
+ * @author  SRA
+ * @version V1.0.0
+ * @date    16 March 2022
+ * @brief   Arduino test application for the STMicrolectronics VL53L4CX
+ *          proximity sensor satellite based on FlightSense.
+ *          This application makes use of C++ classes obtained from the C
+ *          components' drivers.
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; COPYRIGHT(c) 2022 STMicroelectronics</center></h2>
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *   1. Redistributions of source code must retain the above copyright notice,
+ *      this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright notice,
+ *      this list of conditions and the following disclaimer in the documentation
+ *      and/or other materials provided with the distribution.
+ *   3. Neither the name of STMicroelectronics nor the names of its contributors
+ *      may be used to endorse or promote products derived from this software
+ *      without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ ******************************************************************************
+ */
 /*
-    Reset all sensors by setting all of their XSHUT pins LOW for delay(10), then
-    set all XSHUT HIGH to bring out of reset. Keep sensor #1 awake by keeping XSHUT
-    pin HIGH. Put all other sensors into shutdown by pulling XSHUT pins LOW.
-    Initialize sensor #1 with sensor.begin(new_i2c_address). Pick any number except
-    0x29 and it must be under 0x7F. Going with 0x30 to 0x3F is probably OK.
-    Keep sensor #1 awake, and now bring sensor #2 out of reset by setting its
-    XSHUT pin HIGH. Initialize sensor #2 with sensor.begin(new_i2c_address).
-*/
-void tofs_init() {
-  bool found_any_sensors = false;
-  // Set all shutdown pins low to shutdown sensors
-  for (int i = 0; i < TOTAL_TOFS; i++) {
-    digitalWrite(sensors[i].shutdown_pin, LOW);
-  }
-  delay(10);
+ * To use this sketch you need to connect the VL53L4CD satellite sensor directly to the Nucleo board with wires in this way:
+ * pin 1 (GND) of the VL53L4CD satellite connected to GND of the Nucleo board
+ * pin 2 (VDD) of the VL53L4CD satellite connected to 3V3 pin of the Nucleo board
+ * pin 3 (SCL) of the VL53L4CD satellite connected to pin D15 (SCL) of the Nucleo board
+ * pin 4 (SDA) of the VL53L4CD satellite connected to pin D14 (SDA) of the Nucleo board
+ * pin 5 (GPIO1) of the VL53L4CD satellite connected to pin A2 of the Nucleo board
+ * pin 6 (XSHUT) of the VL53L4CD satellite connected to pin A1 of the Nucleo board
+ */
+/* Includes ------------------------------------------------------------------*/
+#include <Arduino.h>
+#include <Wire.h>
+#include <vl53l4cx_class.h>
 
-  for (int i = 0; i < TOTAL_TOFS; i++) {
-    // one by one enable sensors and set their I2C address
-    digitalWrite(sensors[i].shutdown_pin, HIGH);
-    delay(10);
+#define DEV_I2C Wire
 
-    if (sensors[i].psensor->begin(sensors[i].addr, false, sensors[i].pwire, sensors[i].sensor_config)) {
-      found_any_sensors = true;
-    } else {
-      Serial.print(i, DEC);
-      Serial.println(": failed to begin.");
+// Components.
+VL53L4CX sensor_vl53l4cx_sat(&DEV_I2C, A1);
+
+/* Setup ---------------------------------------------------------------------*/
+
+void setup()
+{
+  // Initialize serial for output.
+  Serial.begin(9600);
+  Serial.println("Starting...");
+
+  // Initialize I2C bus.
+  DEV_I2C.begin();
+
+  // Configure VL53L4CX satellite component.
+  sensor_vl53l4cx_sat.begin();
+
+  // Switch off VL53L4CX satellite component.
+  sensor_vl53l4cx_sat.VL53L4CX_Off();
+
+  //Initialize VL53L4CX satellite component.
+  sensor_vl53l4cx_sat.InitSensor(0x29);
+
+  // Start Measurements
+  sensor_vl53l4cx_sat.VL53L4CX_StartMeasurement();
+}
+
+void loop()
+{
+  VL53L4CX_MultiRangingData_t MultiRangingData;
+  VL53L4CX_MultiRangingData_t *pMultiRangingData = &MultiRangingData;
+  uint8_t NewDataReady = 0;
+  int no_of_object_found = 0, j;
+  char report[64];
+  int status;
+
+  do {
+    status = sensor_vl53l4cx_sat.VL53L4CX_GetMeasurementDataReady(&NewDataReady);
+  } while (!NewDataReady);
+
+  if ((!status) && (NewDataReady != 0)) {
+    status = sensor_vl53l4cx_sat.VL53L4CX_GetMultiRangingData(pMultiRangingData);
+    no_of_object_found = pMultiRangingData->NumberOfObjectsFound;
+    snprintf(report, sizeof(report), "VL53L4CX Satellite: Count=%d, #Objs=%1d ", pMultiRangingData->StreamCount, no_of_object_found);
+    Serial.print(report);
+    for (j = 0; j < no_of_object_found; j++) {
+      if (j != 0) {
+        Serial.print("\r\n                               ");
+      }
+      Serial.print("status=");
+      Serial.print(pMultiRangingData->RangeData[j].RangeStatus);
+      Serial.print(", D=");
+      Serial.print(pMultiRangingData->RangeData[j].RangeMilliMeter);
+      Serial.print("mm");
+      Serial.print(", Signal=");
+      Serial.print((float)pMultiRangingData->RangeData[j].SignalRateRtnMegaCps / 65536.0);
+      Serial.print(" Mcps, Ambient=");
+      Serial.print((float)pMultiRangingData->RangeData[j].AmbientRateRtnMegaCps / 65536.0);
+      Serial.print(" Mcps");
+    }
+    Serial.println("");
+    if (status == 0) {
+      status = sensor_vl53l4cx_sat.VL53L4CX_ClearInterruptAndStartMeasurement();
     }
   }
-
-  if (!found_any_sensors) {
-    Serial.println("No valid sensors found.");
-  }
 }
-
-void setup() {
-  Serial.begin(9600);
-  // Start the IIC bus:
-  Wire.begin();
-
-  while(!Serial);
-
-  // Initialize all of the pins.
-  Serial.println("Initializing TOFS...");
-  for (int i = 0; i < TOTAL_TOFS; i++) {
-    pinMode(sensors[i].shutdown_pin, OUTPUT);
-    digitalWrite(sensors[i].shutdown_pin, LOW);
-  }
-  tofs_init();
-  Serial.println("TOFS intialized.");
-}
-
-void loop() {
-  // Detect within a specific range of either sensor
-  // for (int i = 0; i < TOTAL_TOFS; i++) {
-  //   if(sensors[i].psensor->readRange() <= 40) {
-  //     digitalWrite(13, HIGH);
-  //     Serial.print("Sensor ");
-  //     Serial.print(i + 1);
-  //     Serial.print(": ");
-  //     Serial.print(sensors[i].psensor->readRange());
-  //     Serial.println("mm");
-  //   } else {
-  //     digitalWrite(13, LOW);
-  //   }
-  // }
-  
-  // Read the data from the sensors
-  for (int i = 0; i < TOTAL_TOFS; i++) {
-    // capture the sensor's data
-    ranges_mm[i] = sensors[i].psensor->readRange();
-  }
-  
-  //Print out the distances to the serial monitor, again using a 'for' loop:
-  // for (int i = 0; i < TOTAL_TOFS; i++) {
-  //   Serial.print("Sensor ");
-  //   Serial.print(i + 1);
-  //   Serial.print(" : ");
-  //   if (ranges_mm[i] == 8190) {
-  //     Serial.print("Out of Bounds.");
-  //   } else {
-  //     Serial.print(ranges_mm[i], DEC);
-  //     Serial.print("mm  ");
-  //   }
-  // }
-
-  Serial.print("Sensor 1: ");
-  if(ranges_mm[0] == 8190) {
-    Serial.println("Out of Bounds.");
-  } else {
-    Serial.print(ranges_mm[0], DEC);
-    Serial.println("mm");
-  }
-
-  // // Detect when within a specific range of either sensor
-  // for (int i = 0; i < TOTAL_TOFS; i++) {
-  //   if(ranges_mm[i] <= 40) {
-  //     digitalWrite(13, HIGH);
-  //     Serial.print("Sensor ");
-  //     Serial.print(i + 1);
-  //     Serial.print(": ");
-  //     Serial.println(ranges_mm[i]);
-  //   } else {
-  //     digitalWrite(13, LOW);
-  //   }
-  // }
-} 
