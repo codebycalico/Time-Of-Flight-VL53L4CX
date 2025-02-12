@@ -59,30 +59,37 @@
 #define DEV_I2C Wire
 
 // Components.
-VL53L4CX sensor_vl53l4cx_sat(&DEV_I2C, A1);
+VL53L4CX sensor_vl53l4cx_sat(&DEV_I2C, 8);
 
 /* Setup ---------------------------------------------------------------------*/
 
 void setup()
 {
   // Initialize serial for output.
-  Serial.begin(9600);
+  
+  while (!Serial)
+    Serial.begin(9600);
   Serial.println("Starting...");
 
   // Initialize I2C bus.
   DEV_I2C.begin();
-
+  Serial.println("Connected to I2C...");
+  
   // Configure VL53L4CX satellite component.
   sensor_vl53l4cx_sat.begin();
+  Serial.println("Connected to TOF...");
 
   // Switch off VL53L4CX satellite component.
   sensor_vl53l4cx_sat.VL53L4CX_Off();
+  Serial.println("TOF off...");
 
   //Initialize VL53L4CX satellite component.
   sensor_vl53l4cx_sat.InitSensor(0x29);
+  Serial.println("TOF initializing...");
 
   // Start Measurements
   sensor_vl53l4cx_sat.VL53L4CX_StartMeasurement();
+  Serial.println("TOF reading...");
 }
 
 void loop()
