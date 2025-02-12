@@ -66,9 +66,9 @@ VL53L4CX sensor_vl53l4cx_sat(&DEV_I2C, 8);
 void setup()
 {
   // Initialize serial for output.
-  
-  while (!Serial)
+  while (!Serial) {
     Serial.begin(9600);
+  }
   Serial.println("Starting...");
 
   // Initialize I2C bus.
@@ -84,7 +84,7 @@ void setup()
   Serial.println("TOF off...");
 
   //Initialize VL53L4CX satellite component.
-  sensor_vl53l4cx_sat.InitSensor(0x29);
+  sensor_vl53l4cx_sat.InitSensor(0x12);
   Serial.println("TOF initializing...");
 
   // Start Measurements
@@ -103,7 +103,12 @@ void loop()
 
   do {
     status = sensor_vl53l4cx_sat.VL53L4CX_GetMeasurementDataReady(&NewDataReady);
+    //Serial.println(NewDataReady);
+    //Serial.print("Status: ");
+    //Serial.println(status);
   } while (!NewDataReady);
+
+  Serial.println(status);
 
   if ((!status) && (NewDataReady != 0)) {
     status = sensor_vl53l4cx_sat.VL53L4CX_GetMultiRangingData(pMultiRangingData);
