@@ -84,7 +84,7 @@ void setup()
   Serial.println("TOF off...");
 
   //Initialize VL53L4CX satellite component.
-  sensor_vl53l4cx_sat.InitSensor(0x12);
+  sensor_vl53l4cx_sat.InitSensor(0x29);
   Serial.println("TOF initializing...");
 
   // Start Measurements
