@@ -59,7 +59,8 @@
 #define DEV_I2C Wire
 
 // Components.
-VL53L4CX sensor_vl53l4cx_sat(&DEV_I2C, 8);
+//VL53L4CX sensor_vl53l4cx_sat(&DEV_I2C, 8);
+VL53L4CX *sensor_vl53l4cx_sat;
 
 /* Setup ---------------------------------------------------------------------*/
 
@@ -71,24 +72,27 @@ void setup()
   }
   Serial.println("Starting...");
 
+  // Initialize sensor
+  sensor_vl53l4cx_sat = new VL53L4CX(&DEV_I2C, 8);
+                      
   // Initialize I2C bus.
   DEV_I2C.begin();
   Serial.println("Connected to I2C...");
   
   // Configure VL53L4CX satellite component.
-  sensor_vl53l4cx_sat.begin();
+  sensor_vl53l4cx_sat->begin();
   Serial.println("Connected to TOF...");
 
   // Switch off VL53L4CX satellite component.
-  sensor_vl53l4cx_sat.VL53L4CX_Off();
+  sensor_vl53l4cx_sat->VL53L4CX_Off();
   Serial.println("TOF off...");
 
   //Initialize VL53L4CX satellite component.
-  sensor_vl53l4cx_sat.InitSensor(0x29);
+  sensor_vl53l4cx_sat->InitSensor(0x29);
   Serial.println("TOF initializing...");
 
   // Start Measurements
-  sensor_vl53l4cx_sat.VL53L4CX_StartMeasurement();
+  sensor_vl53l4cx_sat->VL53L4CX_StartMeasurement();
   Serial.println("TOF reading...");
 }
 
@@ -100,18 +104,21 @@ void loop()
   int no_of_object_found = 0, j;
   char report[64];
   int status;
+  //Serial.println("Right before loop.");
 
   do {
-    status = sensor_vl53l4cx_sat.VL53L4CX_GetMeasurementDataReady(&NewDataReady);
-    //Serial.println(NewDataReady);
+    Serial.println("Enter loop.");
+    // ****** Getting stuck in this function somewhere. 
+    status = sensor_vl53l4cx_sat->VL53L4CX_GetMeasurementDataReady(&NewDataReady);
+    Serial.println(NewDataReady);
     //Serial.print("Status: ");
-    //Serial.println(status);
+    Serial.println(status);
   } while (!NewDataReady);
 
   Serial.println(status);
 
   if ((!status) && (NewDataReady != 0)) {
-    status = sensor_vl53l4cx_sat.VL53L4CX_GetMultiRangingData(pMultiRangingData);
+    status = sensor_vl53l4cx_sat->VL53L4CX_GetMultiRangingData(pMultiRangingData);
     no_of_object_found = pMultiRangingData->NumberOfObjectsFound;
     snprintf(report, sizeof(report), "VL53L4CX Satellite: Count=%d, #Objs=%1d ", pMultiRangingData->StreamCount, no_of_object_found);
     Serial.print(report);
@@ -132,7 +139,7 @@ void loop()
     }
     Serial.println("");
     if (status == 0) {
-      status = sensor_vl53l4cx_sat.VL53L4CX_ClearInterruptAndStartMeasurement();
+      status = sensor_vl53l4cx_sat->VL53L4CX_ClearInterruptAndStartMeasurement();
     }
   }
 }
