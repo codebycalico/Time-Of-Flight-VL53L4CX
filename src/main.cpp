@@ -73,7 +73,7 @@ void setup()
   Serial.println("Starting...");
 
   // Initialize sensor
-  sensor_vl53l4cx_sat = new VL53L4CX(&DEV_I2C, 8);
+  sensor_vl53l4cx_sat = new VL53L4CX(&DEV_I2C, 23);
                       
   // Initialize I2C bus.
   DEV_I2C.begin();
@@ -87,13 +87,14 @@ void setup()
   sensor_vl53l4cx_sat->VL53L4CX_Off();
   Serial.println("TOF off...");
 
-  //Initialize VL53L4CX satellite component.
-  sensor_vl53l4cx_sat->InitSensor(0x29);
+  // Initialize VL53L4CX satellite component.
+  // Needed when using more than one sensor in parallel.
+  //sensor_vl53l4cx_sat->InitSensor(0x12);
   Serial.println("TOF initializing...");
 
   // Start Measurements
   sensor_vl53l4cx_sat->VL53L4CX_StartMeasurement();
-  Serial.println("TOF reading...");
+  Serial.println("TOF setup complete.");
 }
 
 void loop()
@@ -104,15 +105,16 @@ void loop()
   int no_of_object_found = 0, j;
   char report[64];
   int status;
-  //Serial.println("Right before loop.");
+
+  Serial.println("Gathering readings...");
 
   do {
-    Serial.println("Enter loop.");
+    //Serial.println("Enter main.cpp loop.");
     // ****** Getting stuck in this function somewhere. 
     status = sensor_vl53l4cx_sat->VL53L4CX_GetMeasurementDataReady(&NewDataReady);
-    Serial.println(NewDataReady);
+    //Serial.println(NewDataReady);
     //Serial.print("Status: ");
-    Serial.println(status);
+    //Serial.println(status);
   } while (!NewDataReady);
 
   Serial.println(status);
